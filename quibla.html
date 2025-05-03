@@ -7,93 +7,67 @@
     <style>
         body {
             margin: 0;
-            background: linear-gradient(120deg,#114c36 0,#4dc2b1 100%);
+            padding: 0;
             font-family: 'Rubik', Arial, Verdana, Tahoma, sans-serif;
-            min-height: 100vh;
+            background: linear-gradient(120deg,#114c36 0,#4dc2b1 100%);
         }
-        .top-bar {
-            background: #0e392a;
+        .nav {
+            width: 100%;
+            background: #166c43;
+            padding: 18px 0 18px 0;
+            text-align: center;
+            box-sizing: border-box;
+        }
+        .nav a {
             color: #fff;
-            padding: 46px 0 18px 0;
-            text-align: center;
-            border-bottom-left-radius: 52px 18px;
-            border-bottom-right-radius: 52px 18px;
-            position: relative;
+            font-weight: bold;
+            font-size: 1.22em;
+            letter-spacing: .01em;
+            text-decoration: none;
+            padding: 8px 18px;
+            border-radius: 8px;
+            background: #24aea1;
+            transition: background 0.25s;
         }
-        .top-bar .crescent {
-            font-size:2.9em;
-            position: absolute;
-            left: 30px; top: 13px;
-        }
-        .title {
-            font-size: 2.2em;
-            font-weight: 700;
-            letter-spacing: .04em;
-        }
-        .slogan {
-            font-size: 1.13em;
-            font-style: italic;
-            color: #e6fff7;
-            margin-top: 4px;
-        }
-        .main-block {
-            background: rgba(255,255,255,0.96);
-            box-shadow: 0 10px 32px rgba(0,0,0,0.15);
-            border-radius: 24px;
-            padding: 28px 24px 18px 24px;
-            max-width: 650px;
-            margin: 36px auto 0;
-            text-align: center;
+        .nav a:hover {
+            background: #259a8f;
         }
         .qibla-iframe {
-            width: 100%;
-            height: 700px;
+            display: block;
+            width: 100vw;
+            max-width: 100%;
+            height: 94vh;
+            min-height: 600px;
             border: none;
-            border-radius: 5px;
-            margin-top: 14px;
+            margin: 0 auto;
+            background: #fff;
         }
-        @media (max-width:800px) {
-            .main-block {max-width:96vw;}
-            .qibla-iframe {height: 60vw;}
+        .note {
+            color: #910e0e;
+            text-align: center;
+            margin-top: 16px;
+            font-size: 15px;
+            font-family: inherit;
         }
-        @media (max-width:500px) {
-            .main-block {padding:8px 2vw 6vw;}
-            .qibla-iframe {height: 74vw;}
+        @media (max-width:600px) {
+            .qibla-iframe { height: 88vh; min-height: 420px; }
+            .nav a { font-size: 1em; padding: 7px 12px;}
         }
     </style>
-    <link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
-<div style="background: #166c43; border-radius: 0 0 22px 22px; padding: 0; margin-bottom:14px;">
-  <div style="display: flex; align-items: center; max-width:610px; margin:0 auto;">
-    <span style="color:#fff; font-size:1.34em; font-weight:900; letter-spacing:0.04em; margin-left:18px; margin-top:2px;">
-    </span>
-  </div>
-  <nav style="text-align:center; margin-top:0px; padding:10px 0 7px 0;">
-    <a href="#" onclick="window.location.href='https://sheykh-islam.github.io/namaz/index.html'; return false;"
-style="color:#fff; font-weight:bold; padding:0 12px; text-decoration:none;">
-      Время намаза 🕒
-    </a>
-  </nav>
-</div>
-    <div class="top-bar">
-        <span class="crescent"></span>
-        <div class="title">Поиск Киблы</div>
-        <div class="slogan">«Воистину, предписано верующим совершать молитву-намаз в строго определенное время! (4:103)»</div>
+    <div class="nav">
+        <a href="https://sheykh-islam.github.io/namaz/index.html" target="_blank" rel="noopener">Время намаза 🕒</a>
     </div>
-
-    <div class="main-block">
-        <iframe 
-            class="qibla-iframe"
-            src="https://qiblafinder.withgoogle.com/intl/ru/onboarding"
-            allow="camera; gyroscope; accelerometer;"
-            title="Qibla Finder"
-        ></iframe>
-        <div style="color:#910e0e; font-size:15px; margin-top:16px;">
-          ⚠️ Если сервис Google не загружается — нажмите  
-          <a href="https://qiblafinder.withgoogle.com/intl/ru/onboarding" target="_blank" rel="noopener noreferrer" style="color:#177056;font-weight:bold;">сюда</a>  
-          чтобы открыть Qibla Finder в новой вкладке.
-        </div>
+    <iframe
+        class="qibla-iframe"
+        src="https://qiblafinder.withgoogle.com/intl/ru/finder"
+        allow="camera; gyroscope; accelerometer;"
+        title="Qibla Finder"
+    ></iframe>
+    <div class="note">
+        ⚠️ Если сервис Google не загружается или требует повернуть экран,<br>
+        <a href="https://qiblafinder.withgoogle.com/intl/ru/finder" target="_blank" rel="noopener" style="color:#177056;font-weight:bold;">откройте Qibla Finder в новой вкладке</a>.
     </div>
 </body>
 </html>
