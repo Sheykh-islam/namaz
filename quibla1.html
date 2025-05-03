@@ -15,6 +15,12 @@
     .kaaba {width: 46px;height: 46px;z-index: 3;filter: drop-shadow(0 2px 8px #111a);}
     .status {margin-top: 24px;font-size: 1.1em;color: #1c515f;text-align: center;padding: 10px;background: rgba(255,255,255,0.85);border-radius: 11px;min-width: 240px;}
     .tip {color: #771a0a; margin-top: 13px; background: #ffffe8; font-size:0.99em; border-radius:7px; padding: 8px 12px;}
+    .start-btn {
+      margin-top: 22px; font-size: 1.15em; padding: 13px 32px; border-radius: 9px;
+      background: #159c82; color: #fff; border: none; cursor: pointer; font-family: inherit; font-weight: bold;
+      box-shadow: 0 2px 12px #044b393d; transition: background 0.23s;
+    }
+    .start-btn:hover { background: #135c4b;}
     @media (max-width: 480px) {.compass-wrapper {width: 90vw; height: 90vw;}.kaaba {width:11vw;height:11vw;}.arrow {width:22vw;height:22vw;}}
   </style>
 </head>
@@ -43,48 +49,47 @@
       </svg>
       <!-- SVG Кааба -->
       <svg class="kaaba" viewBox="0 0 48 48">
-        <!-- Тень -->
         <ellipse cx="24" cy="44" rx="10" ry="3" fill="#aaa" opacity="0.3"/>
-        <!-- Кааба -->
         <rect x="10" y="12" width="28" height="22" rx="3" fill="#222"/>
         <rect x="15" y="17" width="18" height="12" rx="2" fill="#674c2b"/>
         <rect x="10" y="12" width="28" height="6" fill="#d6bc20"/>
         <rect x="22" y="26" width="4" height="3" fill="#d6bc20"/>
       </svg>
     </div>
-    <div class="status"> Загружаем координаты и компас... </div>
+    <div class="status"> Загружаем координаты... </div>
+    <button class="start-btn" style="display:none;">Включить компас</button>
     <div class="tip">
-      Если стрелка ведет себя странно или указывает не туда,<br>
-      <b>покрутите телефон "восьмеркой" для калибровки</b>.<br>
-      Работает только по HTTPS, лучше вне помещений.
+      Если стрелка ведет себя странно —<br>
+      <b>крутаните телефон “восьмеркой” для калибровки</b>.
     </div>
   </div>
   <script>
-    // Координаты Каабы
     const KAABA = { lat: 21.4225, lng: 39.8262 };
     const statusEl = document.querySelector('.status');
     const arrowEl = document.querySelector('.arrow');
     const compassEl = document.querySelector('.compass-img');
-    let userLat = null, userLng = null, qiblaDeg = null;
+    const startBtn = document.querySelector('.start-btn');
+    let userLat = null, userLng = null, qiblaDeg = null, compassStarted = false;
 
     function deg2rad(deg){return deg*Math.PI/180;}
     function rad2deg(rad){return rad*180/Math.PI;}
     function getQiblaAngle(lat1, lon1, lat2, lon2) {
-        let phi1 = deg2rad(lat1), phi2 = deg2rad(lat2), dLon = deg2rad(lon2-lon1);
-        let y = Math.sin(dLon)*Math.cos(phi2);
-        let x = Math.cos(phi1)*Math.sin(phi2)-Math.sin(phi1)*Math.cos(phi2)*Math.cos(dLon);
-        let brng = Math.atan2(y, x);
-        return (rad2deg(brng)+360)%360;
+      let phi1 = deg2rad(lat1), phi2 = deg2rad(lat2), dLon = deg2rad(lon2-lon1);
+      let y = Math.sin(dLon)*Math.cos(phi2);
+      let x = Math.cos(phi1)*Math.sin(phi2)-Math.sin(phi1)*Math.cos(phi2)*Math.cos(dLon);
+      let brng = Math.atan2(y, x);
+      return (rad2deg(brng)+360)%360;
     }
     function geoError(err){
       statusEl.textContent = 'Ошибка местоположения: ' + err.message;
+      startBtn.style.display = 'none';
     }
     function geoSuccess(pos){
       userLat = pos.coords.latitude;
       userLng = pos.coords.longitude;
       qiblaDeg = getQiblaAngle(userLat, userLng, KAABA.lat, KAABA.lng);
-      statusEl.textContent = "Калибруем компас... (угол до Киблы: " + qiblaDeg.toFixed(1)+"°)";
-      enableCompass();
+      statusEl.textContent = "Готово! Нажмите кнопку для включения компаса.";
+      startBtn.style.display = '';
     }
     function updateCompass(compassHeading){
       if (qiblaDeg === null) return;
@@ -93,7 +98,24 @@
       compassEl.style.transform = `rotate(${-compassHeading}deg)`;
       statusEl.innerHTML =
         `<b>Кибла: ${qiblaDeg.toFixed(1)}°</b> от северa.<br>
-        Совместите стрелку с направлением вперед (указателем телефона).`;
+        Совместите стрелку с направлением вперед телефона.`;
+    }
+    function subscribeCompass(){
+      if (compassStarted) return;
+      compassStarted = true;
+      window.addEventListener('deviceorientation', function(event){
+        let heading;
+        if (event.webkitCompassHeading !== undefined) {
+          heading = event.webkitCompassHeading;
+        } else if (event.absolute && event.alpha!==null) {
+          heading = 360 - event.alpha;
+        } else {
+          statusEl.textContent = 'Не удается получить угол компаса. Возможно, нужен выход на улицу и калибровка.';
+          return;
+        }
+        updateCompass(heading);
+      }, true);
+      statusEl.textContent = 'Поворачивайте телефон — компас работает!';
     }
     function enableCompass(){
       if (window.DeviceOrientationEvent) {
@@ -111,25 +133,16 @@
         statusEl.textContent = 'Компас не поддерживается.';
       }
     }
-    function subscribeCompass(){
-      window.addEventListener('deviceorientation', function(event){
-        let heading;
-        if (event.webkitCompassHeading !== undefined) {
-          heading = event.webkitCompassHeading;
-        } else if (event.absolute && event.alpha!==null) {
-          heading = 360 - event.alpha;
-        } else {
-          statusEl.textContent = 'Не удается получить угол компаса. Возможно, нужен выход на улицу и калибровка.';
-          return;
-        }
-        updateCompass(heading);
-      }, true);
-      statusEl.textContent = 'Поворачивайте телефон — компас работает!';
-    }
+    startBtn.onclick = function(){
+      enableCompass();
+      startBtn.style.display='none';
+    };
+
     if (location.protocol==='https:') {
       navigator.geolocation.getCurrentPosition(geoSuccess, geoError, {enableHighAccuracy:true});
     } else {
       statusEl.textContent = 'Компас работает только по HTTPS (защищённое подключение).';
+      startBtn.style.display='none';
     }
   </script>
 </body>
