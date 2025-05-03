@@ -286,13 +286,26 @@ async function getTimezoneByCoords(lat, lon) {
   return data.timezone;
 }
 
+window._currentTimezone = "Europe/Moscow"; // по умолчанию
+
+function currentTime() {
+    const now = new Date();
+    if (window._currentTimezone) {
+        return new Intl.DateTimeFormat("en-GB", {
+            hour: "2-digit", minute: "2-digit", hour12: false,
+            timeZone: window._currentTimezone
+        }).format(now);
+    }
+    return ('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2);
+}
+
 async function fetchNamazByCoords(lat, lon, cityName) {
   showMsg('Получаем расписание...');
   const timezone = await getTimezoneByCoords(lat, lon);
+  window._currentTimezone = timezone; // <-- вот тут!
   const apiUrl =
     `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=14&timezone=${encodeURIComponent(timezone)}`;
-  const r = await fetch(apiUrl); 
-  const d = await r.json();
+  const r = await fetch(apiUrl); const d = await r.json();
   if (d.code !== 200) throw new Error();
   window._lastPrayerTimes = d.data.timings;
   renderNamaz(window._lastPrayerTimes);
