@@ -239,7 +239,7 @@
     }
     // -- Поиск по названию города на любом языке / любом населенном пункте РФ:
     async function getCoordsByName(city) {
-      const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(city + ', Россия');
+      const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(city);
       const response = await fetch(url, {headers: { 'Accept-Language': 'ru' }});
       const data = await response.json();
       if (data.length) {
