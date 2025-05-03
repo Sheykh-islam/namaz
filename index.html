@@ -273,40 +273,56 @@
     await fetchNamazByCoords(coords.lat, coords.lon, coords.displayName);
     // Сохраняем выбранный город в localStorage!
     localStorage.setItem('savedCity', cityStr);
+// Сбросим сохранённое местоположение, чтобы работал выбранный город
+localStorage.removeItem('geoCoords');
   } catch(e) {
     showMsg('Город не найден или не удалось получить координаты!');
   }
 }
     // -- Определить по геолокации:
-    function fetchByGeo() {
-      showMsg('Определяем вашу геолокацию...');
-      if (!navigator.geolocation) {
-          showMsg('Ваш браузер не поддерживает геолокацию.');
-          return;
-      }
-      navigator.geolocation.getCurrentPosition(async function(pos){
+function fetchByGeo() {
+  showMsg('Определяем вашу геолокацию...');
+  if (!navigator.geolocation) {
+      showMsg('Ваш браузер не поддерживает геолокацию.');
+      return;
+  }
+  navigator.geolocation.getCurrentPosition(async function(pos){
+      try {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          // Получаем красивое имя места
+          let cityName = '';
           try {
-              const lat = pos.coords.latitude;
-              const lon = pos.coords.longitude;
-              // Получаем красивое имя места
-              let cityName = '';
-              try {
-                  const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
-                  const data = await r.json();
-                  cityName = data.display_name || '';
-              } catch(e){ cityName = ''; }
-              await fetchNamazByCoords(lat, lon, cityName);
-          } catch(e){
-              showMsg('Не удалось найти расписание!');
-          }
-      }, function(){ showMsg('Не удалось определить геолокацию.'); });
-    }
+              const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+              const data = await r.json();
+              cityName = data.display_name || '';
+          } catch(e){ cityName = ''; }
+          await fetchNamazByCoords(lat, lon, cityName);
+          // --- добавляем сохранение координат и названия ---
+          localStorage.setItem('geoCoords', JSON.stringify({lat, lon, cityName}));
+          // Если хотите сбрасывать выюранный вручную город:
+          localStorage.removeItem('savedCity');
+      } catch(e){
+          showMsg('Не удалось найти расписание!');
+      }
+  }, function(){ showMsg('Не удалось определить геолокацию.'); });
+}
 (async function(){
+  // 1. Проверим, есть ли координаты из местоположения
+  let geo = localStorage.getItem('geoCoords');
+  if (geo) {
+    try {
+      geo = JSON.parse(geo);
+      await fetchNamazByCoords(geo.lat, geo.lon, geo.cityName); // cityName может быть пустым
+      document.getElementById('cityInput').value = geo.cityName || ''; // если есть
+      return;
+    } catch(e){}
+  }
+  // 2. Если нет, ищем сохранённый город
   let defaultCity = localStorage.getItem('savedCity') || 'Москва';
   try {
     const coords = await getCoordsByName(defaultCity);
     await fetchNamazByCoords(coords.lat, coords.lon, coords.displayName);
-    // Подставить еще и в input:
     document.getElementById('cityInput').value = defaultCity;
   } catch{}
 })();
