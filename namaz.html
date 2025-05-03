@@ -264,12 +264,35 @@ async function getTimezoneByCoords(lat, lon) {
 }
 
 // Получить и показать расписание АЗАНА по координатам и таймзоне
+async function getCoordsByName(city) {
+  const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(city);
+  const response = await fetch(url, {headers: { 'Accept-Language': 'ru' }});
+  const data = await response.json();
+  if (data.length) {
+    return {
+      lat: data[0].lat,
+      lon: data[0].lon,
+      displayName: data[0].display_name
+    };
+  } else {
+    throw new Error("Город не найден.");
+  }
+}
+
+async function getTimezoneByCoords(lat, lon) {
+  const url = `https://api.open-meteo.com/v1/timezone?latitude=${lat}&longitude=${lon}`;
+  const resp = await fetch(url);
+  const data = await resp.json();
+  return data.timezone;
+}
+
 async function fetchNamazByCoords(lat, lon, cityName) {
   showMsg('Получаем расписание...');
   const timezone = await getTimezoneByCoords(lat, lon);
   const apiUrl =
     `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=14&timezone=${encodeURIComponent(timezone)}`;
-  const r = await fetch(apiUrl); const d = await r.json();
+  const r = await fetch(apiUrl); 
+  const d = await r.json();
   if (d.code !== 200) throw new Error();
   window._lastPrayerTimes = d.data.timings;
   renderNamaz(window._lastPrayerTimes);
