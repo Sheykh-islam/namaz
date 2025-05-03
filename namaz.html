@@ -193,6 +193,9 @@ const namazNames = [
     ['Иша','عشاء']
 ];
 
+// По умолчанию — Москва
+window._currentTimezone = "Europe/Moscow";
+
 function renderNamaz(prayerTimes) {
     let html = "";
     const nowParts = currentTime().split(':');
@@ -225,10 +228,18 @@ function renderNamaz(prayerTimes) {
 function timeToMins(str){
     const p=str.split(':'); return Number(p[0])*60+Number(p[1]);
 }
+
 function currentTime() {
     const now = new Date();
+    if (window._currentTimezone) {
+        return new Intl.DateTimeFormat("en-GB", {
+            hour: "2-digit", minute: "2-digit", hour12: false,
+            timeZone: window._currentTimezone
+        }).format(now);
+    }
     return ('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2);
 }
+
 function updateClock() {
     document.getElementById('now').textContent = currentTime();
     if(window._lastPrayerTimes) renderNamaz(window._lastPrayerTimes);
@@ -239,7 +250,7 @@ function showMsg(msg) {
     document.getElementById('msg').textContent = msg || '';
 }
 
-// Получить координаты по произвольному названию (без ", Россия")!
+// Получить координаты по названию города
 async function getCoordsByName(city) {
   const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(city);
   const response = await fetch(url, {headers: { 'Accept-Language': 'ru' }});
@@ -264,48 +275,14 @@ async function getTimezoneByCoords(lat, lon) {
 }
 
 // Получить и показать расписание АЗАНА по координатам и таймзоне
-async function getCoordsByName(city) {
-  const url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(city);
-  const response = await fetch(url, {headers: { 'Accept-Language': 'ru' }});
-  const data = await response.json();
-  if (data.length) {
-    return {
-      lat: data[0].lat,
-      lon: data[0].lon,
-      displayName: data[0].display_name
-    };
-  } else {
-    throw new Error("Город не найден.");
-  }
-}
-
-async function getTimezoneByCoords(lat, lon) {
-  const url = `https://api.open-meteo.com/v1/timezone?latitude=${lat}&longitude=${lon}`;
-  const resp = await fetch(url);
-  const data = await resp.json();
-  return data.timezone;
-}
-
-window._currentTimezone = "Europe/Moscow"; // по умолчанию
-
-function currentTime() {
-    const now = new Date();
-    if (window._currentTimezone) {
-        return new Intl.DateTimeFormat("en-GB", {
-            hour: "2-digit", minute: "2-digit", hour12: false,
-            timeZone: window._currentTimezone
-        }).format(now);
-    }
-    return ('0'+now.getHours()).slice(-2)+':'+('0'+now.getMinutes()).slice(-2);
-}
-
 async function fetchNamazByCoords(lat, lon, cityName) {
   showMsg('Получаем расписание...');
   const timezone = await getTimezoneByCoords(lat, lon);
-  window._currentTimezone = timezone; // <-- вот тут!
+  window._currentTimezone = timezone; // Устанавливаем нужную таймзону
   const apiUrl =
     `https://api.aladhan.com/v1/timings?latitude=${lat}&longitude=${lon}&method=14&timezone=${encodeURIComponent(timezone)}`;
-  const r = await fetch(apiUrl); const d = await r.json();
+  const r = await fetch(apiUrl); 
+  const d = await r.json();
   if (d.code !== 200) throw new Error();
   window._lastPrayerTimes = d.data.timings;
   renderNamaz(window._lastPrayerTimes);
@@ -314,6 +291,7 @@ async function fetchNamazByCoords(lat, lon, cityName) {
   showMsg('');
 }
 
+// Поиск по названию города
 async function fetchByCity() {
   let cityStr = document.getElementById('cityInput').value.trim();
   if (!cityStr) {showMsg('Введите город или деревню!'); return;}
@@ -328,7 +306,7 @@ async function fetchByCity() {
   }
 }
 
-// Поиск по текущей геолокации пользователя, с сохранением
+// Поиск по текущей геолокации пользователя
 function fetchByGeo() {
   showMsg('Определяем вашу геолокацию...');
   if (!navigator.geolocation) {
@@ -339,7 +317,6 @@ function fetchByGeo() {
       try {
           const lat = pos.coords.latitude;
           const lon = pos.coords.longitude;
-          // Получаем красивое имя места
           let cityName = '';
           try {
               const r = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
