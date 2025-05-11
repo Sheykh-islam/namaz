@@ -4,6 +4,7 @@ self.addEventListener('install', event => {
       return cache.addAll([
         './',
         './index.html',
+'./icon-192.png',
         // Добавь сюда важные ресурсы, например, CSS, логотипы и т.д.
       ]);
     })
