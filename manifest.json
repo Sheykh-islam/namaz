@@ -1,6 +1,6 @@
 {
-  "short_name": "Коран",
-  "name": "Священный Коран: Плеер",
+  "short_name": "Намза",
+  "name": "Время намаза",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#ffffff",
